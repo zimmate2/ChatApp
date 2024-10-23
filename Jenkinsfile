@@ -12,7 +12,7 @@ stage('Build-and-tag')
 {
     /*this builds the image
         this is synonymous to docker build on the CLI */
-    app = docker.build('zimmate222/ChatApp')
+    app = docker.build('zimmate222/chatapp')
 }
 
 stage('Push-to-dockerhub')
