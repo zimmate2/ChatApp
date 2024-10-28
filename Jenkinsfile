@@ -13,14 +13,11 @@ stage('SCA-SAST-SNYK-TEST')
       {
         label 'ubuntu-APPserver'
       }
-      steps
-      {
-        snykSecurity(
+      snykSecurity(
             snykInstallation: 'Synk',
             snykTokenId: 'snykid',
             severity: 'critical'
         )
-      }
     }
  
 stage('Build-and-tag')
