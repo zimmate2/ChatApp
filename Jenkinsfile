@@ -7,7 +7,22 @@ stage('Cloning git')
     /*code for cloning repository to our workspace */
     checkout scm
 }
-
+stage('SCA-SAST-SNYK-TEST')
+    {
+      agent
+      {
+        label 'ubuntu-APPserver'
+      }
+      steps
+      {
+        snykSecurity(
+            snykInstallation: 'Synk',
+            snykTokenId: 'snykid',
+            severity: 'critical'
+        )
+      }
+    }
+ 
 stage('Build-and-tag')
 {
     /*this builds the image
