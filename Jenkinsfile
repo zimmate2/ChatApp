@@ -7,7 +7,7 @@ stage('Cloning git')
     /*code for cloning repository to our workspace */
     checkout scm
 }
-stage('SCA-SAST-SNYK-TEST')
+stage('SSCA & SAST Analysis with Snyk')
     {
       agent
       {
