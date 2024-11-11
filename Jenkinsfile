@@ -1,45 +1,107 @@
-node('ubuntu-APPserver')
+pipeline
 {
-
-def app 
-stage('Cloning git')
-{
-    /*code for cloning repository to our workspace */
-    checkout scm
-}
-stage('SSCA & SAST Analysis with Snyk')
+  agent none
+ 
+  stages
+  {
+    stage('CLONE GIT REPOSITORY')
     {
       agent
       {
         label 'ubuntu-APPserver'
       }
-      snykSecurity(
+      steps
+      {
+        checkout scm
+      }
+    }
+ 
+    stage('SCA-SAST-SNYK-TEST')
+    {
+      agent
+      {
+        label 'ubuntu-APPserver'
+      }
+      steps
+      {
+        snykSecurity(
             snykInstallation: 'Synk',
             snykTokenId: 'snykid',
             severity: 'critical'
         )
+      }
+    }
+    
+    // from here down to next comment 
+    stage('SonarQube Analysis') {
+        agent {
+            label 'ubuntu-APPserver'
+        }
+        steps {
+            script {
+                def scannerHome = tool 'SonarQubeScanner'
+                withSonarQubeEnv('sonarqube') {
+                    sh "${scannerHome}/bin/sonar-scanner \
+                        -Dsonar.projectKey=ChatApp \
+                        -Dsonar.sources=."
+                }
+            }
+        }
+    }
+    // this is what we edited
+    
+    stage('BUILD-AND-TAG')
+    {
+      agent
+      {
+        label 'ubuntu-APPserver'
+      }
+      steps
+      {
+         script
+         {
+            def app = docker.build("zimmate222/chatapp")
+            app.tag("latest")
+         }
+      }
     }
  
-stage('Build-and-tag')
-{
-    /*this builds the image
-        this is synonymous to docker build on the CLI */
-    app = docker.build('zimmate222/chatapp')
-}
-
-stage('Push-to-dockerhub')
-{
-    /* this code pushes the changes to docker hub*/
-    docker.withRegistry('https://registry.hub.docker.com', 'zimmate')
+    stage('POST-TO-DOCKERHUB')
     {
-        app.push('latest')
+      agent
+      {
+        label 'ubuntu-APPserver'
+      }
+      steps
+      {
+         script
+         {
+            docker.withRegistry("https://registry.hub.docker.com", "zimmate")
+            {
+                def app = docker.image("zimmate222/chatapp")
+                app.push("latest")
+ 
+            }
+           
+         }
+      }
     }
-}
-
-stage('Deploy')
-{
-    sh "docker-compose down"
-    sh "docker-compose up -d"
-}
-
+ 
+    stage('DEPLOYMENT')
+    {
+      agent
+      {
+        label 'ubuntu-APPserver'
+      }
+      steps
+      {
+        sh "docker-compose down"
+        sh "docker-compose up -d"
+      }
+    }
+ 
+   
+   
+  }
+ 
 }
